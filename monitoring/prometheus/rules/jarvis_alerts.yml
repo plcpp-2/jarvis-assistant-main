@@ -1,0 +1,136 @@
+groups:
+  - name: jarvis_alerts
+    rules:
+      # System Alerts
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage detected
+          description: CPU usage is above 80% for 5 minutes
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / process_virtual_memory_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High memory usage detected
+          description: Memory usage is above 80% for 5 minutes
+
+      # Task Execution Alerts
+      - alert: HighTaskFailureRate
+        expr: rate(task_failures_total[5m]) / rate(task_executions_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High task failure rate
+          description: Task failure rate is above 10% for 5 minutes
+
+      - alert: LongRunningTasks
+        expr: task_duration_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Long running tasks detected
+          description: Tasks running longer than 5 minutes detected
+
+      # Database Alerts
+      - alert: DatabaseConnectionErrors
+        expr: rate(database_connection_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Database connection errors detected
+          description: Database connection errors have occurred in the last minute
+
+      - alert: SlowQueries
+        expr: rate(database_query_duration_seconds_bucket[5m])[+Inf] > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow database queries detected
+          description: Queries taking longer than 1 second detected
+
+      # Network Alerts
+      - alert: HighNetworkLatency
+        expr: rate(network_request_duration_seconds[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High network latency detected
+          description: Network requests taking longer than 1 second
+
+      - alert: NetworkErrors
+        expr: rate(network_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Network errors detected
+          description: Network errors have occurred in the last minute
+
+      # File System Alerts
+      - alert: DiskSpaceWarning
+        expr: node_filesystem_avail_bytes / node_filesystem_size_bytes * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Low disk space warning
+          description: Less than 20% disk space remaining
+
+      - alert: FileOperationErrors
+        expr: rate(file_operation_errors_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: File operation errors detected
+          description: File operation errors have occurred in the last minute
+
+      # Message Queue Alerts
+      - alert: KafkaLag
+        expr: kafka_consumergroup_lag > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Kafka consumer lag
+          description: Consumer group lag is above 1000 messages
+
+      # Cache Alerts
+      - alert: RedisCacheEvictions
+        expr: rate(redis_evicted_keys_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis cache evictions detected
+          description: Cache keys are being evicted due to memory pressure
+
+      # API Alerts
+      - alert: HighAPILatency
+        expr: http_request_duration_seconds{quantile="0.9"} > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High API latency detected
+          description: 90th percentile of API requests taking longer than 1 second
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High error rate detected
+          description: Error rate is above 5% for 5 minutes

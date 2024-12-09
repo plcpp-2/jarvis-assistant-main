@@ -1,0 +1,29 @@
+name: text_analysis
+version: "1.0.0"
+description: Advanced text analysis plugin with NLP capabilities
+author: Jarvis Team
+enabled: true
+dependencies:
+  - spacy
+  - textblob
+  - transformers
+  - torch
+
+config_schema:
+  type: object
+  properties:
+    spacy_model:
+      type: string
+      default: en_core_web_sm
+    sentiment_model:
+      type: string
+      default: distilbert-base-uncased-finetuned-sst-2-english
+    batch_size:
+      type: integer
+      default: 32
+    max_length:
+      type: integer
+      default: 512
+  required:
+    - spacy_model
+    - sentiment_model
