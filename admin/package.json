@@ -20,6 +20,7 @@
     "cross-env": "^7.0.3",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "jarvis-admin": "file:",
     "payload": "^2.0.13"
   },
   "devDependencies": {

@@ -1,0 +1,12 @@
+DATABASE:
+  HOST: production-db.jarvis.com
+  PORT: 5432
+  NAME: jarvis_prod
+
+FEATURES:
+  ML_OPTIMIZATION: true
+  ADVANCED_TRADING: true
+
+LOGGING:
+  LEVEL: ERROR
+  FORMAT: json

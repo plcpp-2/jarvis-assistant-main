@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "undefined/subscriptions/f0c4f980-1ac5-442f-b3ea-8caaa5c7cfc3/resourceGroups/appsvc_linux_centralus/providers/Microsoft.Web/sites/jarvis-main",
+    "appService.deploySubpath": "."
+}

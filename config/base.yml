@@ -1,0 +1,12 @@
+DATABASE:
+  HOST: localhost
+  PORT: 5432
+  NAME: jarvis_financial_platform
+
+FEATURES:
+  ML_OPTIMIZATION: true
+  ADVANCED_TRADING: false
+
+LOGGING:
+  LEVEL: INFO
+  FORMAT: json

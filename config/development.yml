@@ -1,0 +1,11 @@
+DATABASE:
+  HOST: localhost
+  PORT: 5432
+  NAME: jarvis_dev
+
+FEATURES:
+  ML_OPTIMIZATION: true
+  ADVANCED_TRADING: true
+
+LOGGING:
+  LEVEL: DEBUG
