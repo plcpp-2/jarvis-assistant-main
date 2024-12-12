@@ -1,12 +1,84 @@
 DATABASE:
   HOST: localhost
   PORT: 5432
-  NAME: jarvis_financial_platform
-
-FEATURES:
-  ML_OPTIMIZATION: true
-  ADVANCED_TRADING: false
+  USERNAME: jarvis_user
+  NAME: jarvis_db
+  SSL_MODE: require
+  MAX_CONNECTIONS: 20
+  POOL_TIMEOUT: 30
 
 LOGGING:
   LEVEL: INFO
-  FORMAT: json
+  FORMAT: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  FILE_PATH: logs/jarvis.log
+  ROTATION_SIZE: 10MB
+  BACKUP_COUNT: 5
+
+FEATURES:
+  MONITORING: true
+  AI_SERVICES: true
+  BLOCKCHAIN: false
+  WEBHOOKS: true
+  PORTFOLIO_OPTIMIZATION: false
+  RISK_ASSESSMENT: true
+
+SECURITY:
+  JWT_SECRET: ${JARVIS_JWT_SECRET}
+  WEBHOOK_SECRET: ${JARVIS_WEBHOOK_SECRET}
+  CORS_ORIGINS: 
+    - https://app.jarvis-assistant.com
+    - http://localhost:3000
+  RATE_LIMIT: 100
+  ALLOWED_IPS:
+    - 127.0.0.1
+    - ::1
+
+AZURE:
+  SUBSCRIPTION_ID: f0c4f980-1ac5-442f-b3ea-8caaa5c7cfc3
+  TENANT_ID: 52c0682c-5434-42e4-9bab-89b89c906b7e
+  CLIENT_ID: 7c1010dd-a3ae-4506-865c-2b65197ea5e6
+  KEY_VAULT_URL: https://jarvis-keyvault.vault.azure.net/
+  STORAGE_ACCOUNT_URL: https://jarvisfilestorage.blob.core.windows.net
+  COSMOS_URL: https://jarvis-cosmos.documents.azure.com:443/
+  COGNITIVE_ENDPOINT: https://jarvis-cognitive-services.cognitiveservices.azure.com/
+  VISION_ENDPOINT: https://jarvis-computer-vision.cognitiveservices.azure.com/
+
+ENDPOINTS:
+  CORE_API: https://api.jarvis-assistant.com
+  AI_SERVICE: https://ai.jarvis-assistant.com
+  WEBHOOKS: https://webhooks.jarvis-assistant.com
+  BLOCKCHAIN_GATEWAY: https://blockchain.jarvis-assistant.com
+
+SERVICES:
+  PORTS:
+    CORE: 8000
+    WEBSOCKET: 8001
+    GRPC: 50051
+    AI_SERVICE: 8888
+    OLLAMA: 11434
+    PROMETHEUS: 9090
+
+EXTERNAL_SERVICES:
+  OPENAI:
+    ENDPOINT: https://api.openai.com/v1
+    MODEL: gpt-4-turbo
+  OLLAMA:
+    HOST: localhost
+    PORT: 11434
+  ETHEREUM:
+    NODE_URL: https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}
+  BITCOIN:
+    NODE_URL: http://localhost:8332
+
+MONITORING:
+  PROMETHEUS:
+    ENDPOINT: http://localhost:9090
+  SENTRY:
+    DSN: ${SENTRY_DSN}
+
+BLOCKCHAIN:
+  SUPPORTED_NETWORKS:
+    - ethereum
+    - bitcoin
+    - solana
+  DEFAULT_NETWORK: ethereum

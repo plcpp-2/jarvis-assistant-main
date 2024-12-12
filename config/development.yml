@@ -1,11 +1,99 @@
 DATABASE:
   HOST: localhost
   PORT: 5432
-  NAME: jarvis_dev
-
-FEATURES:
-  ML_OPTIMIZATION: true
-  ADVANCED_TRADING: true
+  USERNAME: dev_jarvis_user
+  NAME: jarvis_dev_db
+  SSL_MODE: disable
+  MAX_CONNECTIONS: 10
+  POOL_TIMEOUT: 15
 
 LOGGING:
   LEVEL: DEBUG
+  FORMAT: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  FILE_PATH: logs/jarvis_dev.log
+  ROTATION_SIZE: 5MB
+  BACKUP_COUNT: 3
+
+FEATURES:
+  MONITORING: true
+  AI_SERVICES: true
+  BLOCKCHAIN: true
+  WEBHOOKS: true
+  PORTFOLIO_OPTIMIZATION: true
+  RISK_ASSESSMENT: true
+  DEVELOPMENT_MODE: true
+
+SECURITY:
+  JWT_SECRET: ${JARVIS_DEV_JWT_SECRET}
+  WEBHOOK_SECRET: ${JARVIS_DEV_WEBHOOK_SECRET}
+  CORS_ORIGINS: 
+    - http://localhost:3000
+    - http://127.0.0.1:3000
+  RATE_LIMIT: 500
+  ALLOWED_IPS:
+    - 127.0.0.1
+    - ::1
+    - 192.168.1.0/24
+
+AZURE:
+  ENVIRONMENT: development
+  RESOURCE_GROUP: jarvis-financial-platform-dev-rg
+  CONTAINER_REGISTRY: jarvisdevcontainerregistry
+  SUBSCRIPTION_ID: f0c4f980-1ac5-442f-b3ea-8caaa5c7cfc3
+  TENANT_ID: 52c0682c-5434-42e4-9bab-89b89c906b7e
+  CLIENT_ID: 7c1010dd-a3ae-4506-865c-2b65197ea5e6
+  KEY_VAULT_URL: https://jarvis-dev-keyvault.vault.azure.net/
+  STORAGE_ACCOUNT_URL: https://jarvisdevfilestorage.blob.core.windows.net
+  COSMOS_URL: https://jarvis-dev-cosmos.documents.azure.com:443/
+  COGNITIVE_ENDPOINT: https://jarvis-dev-cognitive-services.cognitiveservices.azure.com/
+  VISION_ENDPOINT: https://jarvis-dev-computer-vision.cognitiveservices.azure.com/
+
+ENDPOINTS:
+  CORE_API: http://localhost:8000
+  AI_SERVICE: http://localhost:8888
+  WEBHOOKS: http://localhost:8001
+  BLOCKCHAIN_GATEWAY: http://localhost:8080
+
+SERVICES:
+  PORTS:
+    CORE: 8000
+    WEBSOCKET: 8001
+    GRPC: 50051
+    AI_SERVICE: 8888
+    OLLAMA: 11434
+    PROMETHEUS: 9090
+
+EXTERNAL_SERVICES:
+  OPENAI:
+    ENDPOINT: https://api.openai.com/v1
+    MODEL: gpt-3.5-turbo
+    API_KEY: ${OPENAI_DEV_API_KEY}
+  OLLAMA:
+    HOST: localhost
+    PORT: 11434
+  ETHEREUM:
+    NODE_URL: https://sepolia.infura.io/v3/${INFURA_DEV_PROJECT_ID}
+  BITCOIN:
+    NODE_URL: http://localhost:18332
+
+MONITORING:
+  PROMETHEUS:
+    ENDPOINT: http://localhost:9090
+    SCRAPE_INTERVAL: 15s
+  SENTRY:
+    DSN: ${SENTRY_DEV_DSN}
+    ENVIRONMENT: development
+    TRACES_SAMPLE_RATE: 1.0
+
+BLOCKCHAIN:
+  SUPPORTED_NETWORKS:
+    - ethereum
+    - bitcoin
+    - solana
+  DEFAULT_NETWORK: ethereum
+  DEVELOPMENT_NETWORKS:
+    - ganache
+    - hardhat
+  TESTNET_FAUCETS:
+    ETHEREUM: https://faucet.sepolia.dev
+    BITCOIN: https://testnet-faucet.mempool.co

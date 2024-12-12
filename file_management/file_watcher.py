@@ -11,6 +11,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class FileEventHandler(FileSystemEventHandler):
     def __init__(self, callback: Callable[[FileSystemEvent], None]):
         self.callback = callback
@@ -19,6 +20,7 @@ class FileEventHandler(FileSystemEventHandler):
     def on_any_event(self, event: FileSystemEvent):
         if not event.is_directory:
             self.callback(event)
+
 
 class FileWatcher:
     def __init__(self, config: Dict[str, Any]):
@@ -35,13 +37,13 @@ class FileWatcher:
             return
 
         self.is_running = True
-        
+
         # Start the observer
         self.observer.start()
-        
+
         # Start processing queue
         asyncio.create_task(self._process_queue())
-        
+
         logger.info("File watcher started")
 
     async def stop(self):
@@ -89,19 +91,19 @@ class FileWatcher:
         """Process a file system event"""
         try:
             file_path = Path(event.src_path)
-            
+
             # Skip if file doesn't exist or is temporary
-            if not file_path.exists() or file_path.name.startswith('.'):
+            if not file_path.exists() or file_path.name.startswith("."):
                 return
 
             # Get file info
             file_info = await self._get_file_info(file_path)
-            
-            if event.event_type in ('created', 'modified'):
+
+            if event.event_type in ("created", "modified"):
                 await self._handle_file_change(file_path, file_info)
-            elif event.event_type == 'deleted':
+            elif event.event_type == "deleted":
                 await self._handle_file_deletion(file_path)
-            
+
         except Exception as e:
             logger.error(f"Error processing event for {event.src_path}: {e}")
 
@@ -110,18 +112,18 @@ class FileWatcher:
         try:
             stats = file_path.stat()
             mime_type, _ = mimetypes.guess_type(str(file_path))
-            
-            async with aiofiles.open(file_path, 'rb') as f:
+
+            async with aiofiles.open(file_path, "rb") as f:
                 content = await f.read()
                 file_hash = hashlib.md5(content).hexdigest()
 
             return {
-                'path': str(file_path),
-                'name': file_path.name,
-                'size': stats.st_size,
-                'modified': datetime.fromtimestamp(stats.st_mtime),
-                'mime_type': mime_type,
-                'hash': file_hash
+                "path": str(file_path),
+                "name": file_path.name,
+                "size": stats.st_size,
+                "modified": datetime.fromtimestamp(stats.st_mtime),
+                "mime_type": mime_type,
+                "hash": file_hash,
             }
         except Exception as e:
             logger.error(f"Error getting file info for {file_path}: {e}")
@@ -132,23 +134,23 @@ class FileWatcher:
         try:
             # Check if file has actually changed
             if str(file_path) in self.file_hashes:
-                if self.file_hashes[str(file_path)] == file_info['hash']:
+                if self.file_hashes[str(file_path)] == file_info["hash"]:
                     return
 
             # Update hash
-            self.file_hashes[str(file_path)] = file_info['hash']
-            
+            self.file_hashes[str(file_path)] = file_info["hash"]
+
             # Process file based on type
-            if file_info.get('mime_type'):
-                if file_info['mime_type'].startswith('text'):
+            if file_info.get("mime_type"):
+                if file_info["mime_type"].startswith("text"):
                     await self._process_text_file(file_path)
-                elif file_info['mime_type'].startswith('image'):
+                elif file_info["mime_type"].startswith("image"):
                     await self._process_image_file(file_path)
-                elif file_info['mime_type'].startswith('video'):
+                elif file_info["mime_type"].startswith("video"):
                     await self._process_video_file(file_path)
-            
+
             logger.info(f"Processed file change: {file_path}")
-            
+
         except Exception as e:
             logger.error(f"Error handling file change for {file_path}: {e}")
 
@@ -157,17 +159,17 @@ class FileWatcher:
         try:
             # Remove from hash cache
             self.file_hashes.pop(str(file_path), None)
-            
+
             # Additional deletion handling
             logger.info(f"Processed file deletion: {file_path}")
-            
+
         except Exception as e:
             logger.error(f"Error handling file deletion for {file_path}: {e}")
 
     async def _process_text_file(self, file_path: Path):
         """Process text file"""
         try:
-            async with aiofiles.open(file_path, 'r') as f:
+            async with aiofiles.open(file_path, "r") as f:
                 content = await f.read()
                 # Process text content
                 # Add to knowledge base, analyze, etc.
@@ -199,7 +201,7 @@ class FileWatcher:
     async def scan_directory(self, path: Path):
         """Scan directory for existing files"""
         try:
-            for file_path in path.rglob('*'):
+            for file_path in path.rglob("*"):
                 if file_path.is_file():
                     file_info = await self._get_file_info(file_path)
                     await self._handle_file_change(file_path, file_info)
@@ -209,7 +211,7 @@ class FileWatcher:
     async def get_file_status(self) -> Dict[str, Any]:
         """Get status of watched files"""
         return {
-            'watched_paths': list(map(str, self.watch_paths)),
-            'tracked_files': len(self.file_hashes),
-            'queue_size': self.processing_queue.qsize()
+            "watched_paths": list(map(str, self.watch_paths)),
+            "tracked_files": len(self.file_hashes),
+            "queue_size": self.processing_queue.qsize(),
         }
