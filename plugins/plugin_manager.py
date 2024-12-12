@@ -10,47 +10,51 @@ from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
+
 class PluginBase(ABC):
     """Base class for all plugins"""
-    
+
     @abstractmethod
     async def initialize(self) -> bool:
         """Initialize the plugin"""
         pass
-    
+
     @abstractmethod
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """Execute the plugin's main functionality"""
         pass
-    
+
     @abstractmethod
     async def cleanup(self) -> bool:
         """Cleanup plugin resources"""
         pass
 
+
 class PluginMetadata:
     """Plugin metadata container"""
+
     def __init__(self, data: Dict[str, Any]):
-        self.name = data['name']
-        self.version = data['version']
-        self.description = data['description']
-        self.author = data['author']
-        self.dependencies = data.get('dependencies', [])
-        self.config_schema = data.get('config_schema', {})
-        self.enabled = data.get('enabled', True)
+        self.name = data["name"]
+        self.version = data["version"]
+        self.description = data["description"]
+        self.author = data["author"]
+        self.dependencies = data.get("dependencies", [])
+        self.config_schema = data.get("config_schema", {})
+        self.enabled = data.get("enabled", True)
+
 
 class PluginManager:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.plugins: Dict[str, PluginBase] = {}
         self.metadata: Dict[str, PluginMetadata] = {}
-        self.executor = ThreadPoolExecutor(max_workers=config.get('max_workers', 4))
+        self.executor = ThreadPoolExecutor(max_workers=config.get("max_workers", 4))
 
     async def load_plugins(self, plugins_dir: Path):
         """Load all plugins from directory"""
         try:
             for plugin_dir in plugins_dir.iterdir():
-                if plugin_dir.is_dir() and (plugin_dir / 'metadata.yaml').exists():
+                if plugin_dir.is_dir() and (plugin_dir / "metadata.yaml").exists():
                     await self.load_plugin(plugin_dir)
             return True
         except Exception as e:
@@ -61,7 +65,7 @@ class PluginManager:
         """Load a single plugin"""
         try:
             # Load metadata
-            metadata = self._load_metadata(plugin_dir / 'metadata.yaml')
+            metadata = self._load_metadata(plugin_dir / "metadata.yaml")
             if not metadata.enabled:
                 return False
 
@@ -73,7 +77,7 @@ class PluginManager:
             # Import plugin module
             module = importlib.import_module(f"plugins.{plugin_dir.name}.plugin")
             plugin_class = self._find_plugin_class(module)
-            
+
             if not plugin_class:
                 logger.error(f"No plugin class found in {plugin_dir.name}")
                 return False
@@ -112,17 +116,11 @@ class PluginManager:
     def _find_plugin_class(self, module) -> Optional[Type[PluginBase]]:
         """Find the plugin class in module"""
         for name, obj in inspect.getmembers(module):
-            if (inspect.isclass(obj) and 
-                issubclass(obj, PluginBase) and 
-                obj != PluginBase):
+            if inspect.isclass(obj) and issubclass(obj, PluginBase) and obj != PluginBase:
                 return obj
         return None
 
-    async def execute_plugin(
-        self,
-        plugin_name: str,
-        **kwargs
-    ) -> Optional[Dict[str, Any]]:
+    async def execute_plugin(self, plugin_name: str, **kwargs) -> Optional[Dict[str, Any]]:
         """Execute a plugin"""
         try:
             if plugin_name not in self.plugins:
@@ -135,11 +133,7 @@ class PluginManager:
             logger.error(f"Error executing plugin {plugin_name}: {e}")
             return None
 
-    async def execute_plugins_parallel(
-        self,
-        plugin_names: List[str],
-        **kwargs
-    ) -> Dict[str, Any]:
+    async def execute_plugins_parallel(self, plugin_names: List[str], **kwargs) -> Dict[str, Any]:
         """Execute multiple plugins in parallel"""
         tasks = []
         for name in plugin_names:
@@ -147,10 +141,7 @@ class PluginManager:
                 tasks.append(self.execute_plugin(name, **kwargs))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        return {
-            name: result for name, result in zip(plugin_names, results)
-            if not isinstance(result, Exception)
-        }
+        return {name: result for name, result in zip(plugin_names, results) if not isinstance(result, Exception)}
 
     async def cleanup_plugins(self):
         """Cleanup all plugins"""
@@ -171,21 +162,18 @@ class PluginManager:
         """Get plugin information"""
         if plugin_name not in self.metadata:
             return None
-            
+
         metadata = self.metadata[plugin_name]
         return {
-            'name': metadata.name,
-            'version': metadata.version,
-            'description': metadata.description,
-            'author': metadata.author,
-            'dependencies': metadata.dependencies,
-            'config_schema': metadata.config_schema,
-            'enabled': metadata.enabled
+            "name": metadata.name,
+            "version": metadata.version,
+            "description": metadata.description,
+            "author": metadata.author,
+            "dependencies": metadata.dependencies,
+            "config_schema": metadata.config_schema,
+            "enabled": metadata.enabled,
         }
 
     def list_plugins(self) -> List[Dict[str, Any]]:
         """List all loaded plugins"""
-        return [
-            self.get_plugin_info(name)
-            for name in self.plugins.keys()
-        ]
+        return [self.get_plugin_info(name) for name in self.plugins.keys()]

@@ -4,6 +4,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 import os
 
+
 class SecurityManager:
     def __init__(self):
         self.key = None
@@ -13,7 +14,7 @@ class SecurityManager:
         """Generate a key from password."""
         if salt is None:
             salt = os.urandom(16)
-        
+
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -40,10 +41,10 @@ class SecurityManager:
     def encrypt_file(self, file_path: str) -> bool:
         """Encrypt a file."""
         try:
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 file_data = file.read()
             encrypted_data = self.fernet.encrypt(file_data)
-            with open(file_path + '.encrypted', 'wb') as file:
+            with open(file_path + ".encrypted", "wb") as file:
                 file.write(encrypted_data)
             return True
         except Exception as e:

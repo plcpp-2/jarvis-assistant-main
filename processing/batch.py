@@ -7,11 +7,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class BatchConfig:
     max_size: int = 100
     max_wait_time: float = 1.0  # seconds
     workers: int = 4
+
 
 class BatchProcessor:
     def __init__(self, config: BatchConfig = None):
@@ -39,7 +41,7 @@ class BatchProcessor:
     async def add_item(self, item: Any):
         """Add an item to the batch queue"""
         await self.batch_queue.put(item)
-        
+
         if len(self.current_batch) >= self.config.max_size:
             await self._process_current_batch()
 
@@ -49,10 +51,7 @@ class BatchProcessor:
             try:
                 # Get item with timeout
                 try:
-                    item = await asyncio.wait_for(
-                        self.batch_queue.get(),
-                        timeout=self.config.max_wait_time
-                    )
+                    item = await asyncio.wait_for(self.batch_queue.get(), timeout=self.config.max_wait_time)
                     self.current_batch.append(item)
                 except asyncio.TimeoutError:
                     pass
@@ -73,10 +72,7 @@ class BatchProcessor:
         current_time = datetime.now()
         time_since_last = (current_time - self.last_process_time).total_seconds()
 
-        return (
-            len(self.current_batch) >= self.config.max_size or
-            time_since_last >= self.config.max_wait_time
-        )
+        return len(self.current_batch) >= self.config.max_size or time_since_last >= self.config.max_wait_time
 
     async def _process_current_batch(self):
         """Process the current batch"""
@@ -90,17 +86,14 @@ class BatchProcessor:
         try:
             # Process batch items in parallel using thread pool
             loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                self.executor,
-                self._process_batch_items,
-                batch
-            )
+            await loop.run_in_executor(self.executor, self._process_batch_items, batch)
         except Exception as e:
             logger.error(f"Error processing batch: {e}")
 
     def _process_batch_items(self, items: List[Any]):
         """Process batch items (override this method)"""
         raise NotImplementedError
+
 
 class TaskBatchProcessor(BatchProcessor):
     def __init__(self, process_func: Callable, config: Optional[BatchConfig] = None):

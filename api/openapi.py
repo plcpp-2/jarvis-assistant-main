@@ -8,6 +8,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class TaskRequest(BaseModel):
     title: str = Field(..., description="Task title")
     description: str = Field(..., description="Task description")
@@ -15,10 +16,12 @@ class TaskRequest(BaseModel):
     priority: int = Field(..., ge=1, le=5, description="Task priority (1-5)")
     parameters: Dict[str, Any] = Field(default={}, description="Additional parameters")
 
+
 class TaskResponse(BaseModel):
     task_id: str = Field(..., description="Unique task ID")
     status: str = Field(..., description="Task status")
     result: Optional[Dict[str, Any]] = Field(None, description="Task result")
+
 
 class DocumentRequest(BaseModel):
     title: str = Field(..., description="Document title")
@@ -26,13 +29,16 @@ class DocumentRequest(BaseModel):
     tags: List[str] = Field(default=[], description="Document tags")
     metadata: Dict[str, Any] = Field(default={}, description="Additional metadata")
 
+
 class SearchRequest(BaseModel):
     query: str = Field(..., description="Search query")
     k: int = Field(default=5, ge=1, le=100, description="Number of results")
     filters: Dict[str, Any] = Field(default={}, description="Search filters")
 
+
 def setup_openapi(app: FastAPI, title: str, version: str):
     """Setup OpenAPI documentation"""
+
     def custom_openapi():
         if app.openapi_schema:
             return app.openapi_schema
@@ -58,6 +64,7 @@ def setup_openapi(app: FastAPI, title: str, version: str):
 
     app.openapi = custom_openapi
 
+
 def create_api_documentation():
     """Create API documentation"""
     router = APIRouter()
@@ -66,7 +73,7 @@ def create_api_documentation():
     async def create_task(task: TaskRequest):
         """
         Create a new task
-        
+
         - **title**: Task title
         - **description**: Detailed task description
         - **type**: Task type (e.g., 'coding', 'research')
@@ -79,7 +86,7 @@ def create_api_documentation():
     async def get_task(task_id: str):
         """
         Get task details by ID
-        
+
         - **task_id**: Unique task identifier
         """
         pass
@@ -88,7 +95,7 @@ def create_api_documentation():
     async def add_document(document: DocumentRequest):
         """
         Add a document to the knowledge base
-        
+
         - **title**: Document title
         - **content**: Document content
         - **tags**: List of tags
@@ -100,7 +107,7 @@ def create_api_documentation():
     async def search_knowledge(search: SearchRequest):
         """
         Search the knowledge base
-        
+
         - **query**: Search query
         - **k**: Number of results to return
         - **filters**: Search filters
@@ -109,22 +116,23 @@ def create_api_documentation():
 
     return router
 
+
 def generate_openapi_spec(app: FastAPI, output_path: Path):
     """Generate OpenAPI specification file"""
     try:
         openapi_schema = app.openapi()
-        
+
         # Save as YAML
         yaml_path = output_path / "openapi.yaml"
-        with open(yaml_path, 'w') as f:
+        with open(yaml_path, "w") as f:
             yaml.dump(openapi_schema, f, sort_keys=False)
-        
+
         # Save as JSON
         json_path = output_path / "openapi.json"
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             app.openapi_schema = openapi_schema
             app.openapi()
-            
+
         logger.info(f"OpenAPI specification generated: {yaml_path}, {json_path}")
         return True
     except Exception as e:

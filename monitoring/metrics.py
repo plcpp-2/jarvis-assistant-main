@@ -2,49 +2,26 @@ from prometheus_client import Counter, Gauge, Histogram, Info
 from typing import Dict
 import time
 
+
 class MetricsManager:
     def __init__(self):
         # Task metrics
-        self.task_counter = Counter(
-            'jarvis_tasks_total',
-            'Total number of tasks processed',
-            ['type', 'status']
-        )
-        
-        self.task_duration = Histogram(
-            'jarvis_task_duration_seconds',
-            'Task processing duration in seconds',
-            ['type']
-        )
-        
+        self.task_counter = Counter("jarvis_tasks_total", "Total number of tasks processed", ["type", "status"])
+
+        self.task_duration = Histogram("jarvis_task_duration_seconds", "Task processing duration in seconds", ["type"])
+
         # Agent metrics
-        self.active_agents = Gauge(
-            'jarvis_active_agents',
-            'Number of active agents',
-            ['role']
-        )
-        
-        self.agent_performance = Gauge(
-            'jarvis_agent_performance',
-            'Agent performance metrics',
-            ['agent_id', 'metric']
-        )
-        
+        self.active_agents = Gauge("jarvis_active_agents", "Number of active agents", ["role"])
+
+        self.agent_performance = Gauge("jarvis_agent_performance", "Agent performance metrics", ["agent_id", "metric"])
+
         # System metrics
-        self.system_resources = Gauge(
-            'jarvis_system_resources',
-            'System resource usage',
-            ['resource']
-        )
-        
-        self.system_info = Info('jarvis_system', 'System information')
-        
+        self.system_resources = Gauge("jarvis_system_resources", "System resource usage", ["resource"])
+
+        self.system_info = Info("jarvis_system", "System information")
+
         # Learning metrics
-        self.model_accuracy = Gauge(
-            'jarvis_model_accuracy',
-            'Model accuracy metrics',
-            ['model_name']
-        )
+        self.model_accuracy = Gauge("jarvis_model_accuracy", "Model accuracy metrics", ["model_name"])
 
     def record_task(self, task_type: str, status: str):
         """Record task execution"""
@@ -76,12 +53,14 @@ class MetricsManager:
         """Update model accuracy metrics"""
         self.model_accuracy.labels(model_name=model_name).set(accuracy)
 
+
 class MetricsDecorator:
     def __init__(self, metrics_manager: MetricsManager):
         self.metrics = metrics_manager
 
     def track_task(self, task_type: str):
         """Decorator to track task execution"""
+
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 start_time = time.time()
@@ -95,5 +74,7 @@ class MetricsDecorator:
                 finally:
                     duration = time.time() - start_time
                     self.metrics.record_task_duration(task_type, duration)
+
             return wrapper
+
         return decorator

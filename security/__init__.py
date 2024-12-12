@@ -1,3 +1,3 @@
 from .encryption import SecurityManager
 
-__all__ = ['SecurityManager']
+__all__ = ["SecurityManager"]

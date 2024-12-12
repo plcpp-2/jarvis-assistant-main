@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CacheManager:
     def __init__(self, redis_url: str = "redis://localhost:6379/0"):
         self.redis = redis.from_url(redis_url)
@@ -51,6 +52,7 @@ class CacheManager:
             logger.error(f"Cache clear error: {e}")
             return False
 
+
 def cache_key(*args, **kwargs) -> str:
     """Generate cache key from arguments"""
     key_parts = [str(arg) for arg in args]
@@ -58,12 +60,14 @@ def cache_key(*args, **kwargs) -> str:
     key_str = ":".join(key_parts)
     return hashlib.sha256(key_str.encode()).hexdigest()
 
+
 def cached(ttl: Optional[timedelta] = None):
     """Decorator for caching function results"""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
-            if not hasattr(self, 'cache_manager'):
+            if not hasattr(self, "cache_manager"):
                 return await func(self, *args, **kwargs)
 
             key = f"{func.__name__}:{cache_key(*args, **kwargs)}"
@@ -75,5 +79,7 @@ def cached(ttl: Optional[timedelta] = None):
             result = await func(self, *args, **kwargs)
             await self.cache_manager.set(key, result, ttl)
             return result
+
         return wrapper
+
     return decorator

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+
 class TaskType(Enum):
     DATA_COLLECTION = "data_collection"
     ANALYSIS = "analysis"
@@ -11,6 +12,7 @@ class TaskType(Enum):
     MONITORING = "monitoring"
     COORDINATION = "coordination"
     CUSTOM = "custom"
+
 
 class AgentRole(Enum):
     ORCHESTRATOR = "orchestrator"
@@ -21,12 +23,14 @@ class AgentRole(Enum):
     LEARNER = "learner"
     CUSTOM = "custom"
 
+
 @dataclass
 class TaskResult:
     success: bool
     data: Any
     metrics: Dict[str, float]
     error: Optional[str] = None
+
 
 @dataclass
 class Task:
@@ -43,6 +47,7 @@ class Task:
     parameters: Dict[str, Any]
     completed_at: Optional[str] = None
     result: Optional[TaskResult] = None
+
 
 @dataclass
 class AgentMetrics:

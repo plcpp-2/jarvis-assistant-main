@@ -17,7 +17,7 @@ setup(
         "aiofiles>=23.2.1",
         "pydantic>=2.5.2",
         "python-dotenv>=1.0.0",
-        "psutil>=5.9.6"
+        "psutil>=5.9.6",
     ],
     python_requires=">=3.9",
 )

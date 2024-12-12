@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 import json
 
+
 class SystemExecutor:
     def __init__(self):
         self.logger = logging.getLogger("SystemExecutor")
@@ -21,7 +22,7 @@ class SystemExecutor:
         shell: bool = False,
         cwd: Optional[str] = None,
         env: Optional[Dict[str, str]] = None,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
     ) -> Dict[str, Union[int, str, List[str]]]:
         """Execute a system command asynchronously"""
         try:
@@ -30,11 +31,11 @@ class SystemExecutor:
 
             # Create process
             process = await asyncio.create_subprocess_shell(
-                command if shell else ' '.join(command),
+                command if shell else " ".join(command),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=cwd,
-                env=env
+                env=env,
             )
 
             self.running_processes[process_id] = process
@@ -42,9 +43,7 @@ class SystemExecutor:
 
             # Wait for process with timeout
             try:
-                stdout, stderr = await asyncio.wait_for(
-                    process.communicate(), timeout
-                )
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout)
             except asyncio.TimeoutError:
                 process.terminate()
                 await process.wait()
@@ -59,11 +58,7 @@ class SystemExecutor:
 
             self.process_outputs[process_id] = output
 
-            return {
-                "process_id": process_id,
-                "return_code": process.returncode,
-                "output": output
-            }
+            return {"process_id": process_id, "return_code": process.returncode, "output": output}
 
         except Exception as e:
             self.logger.error(f"Command execution failed: {str(e)}")
@@ -75,7 +70,7 @@ class SystemExecutor:
         process_id: str,
         args: Optional[List[str]] = None,
         env: Optional[Dict[str, str]] = None,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
     ) -> Dict[str, Union[int, str, List[str]]]:
         """Execute a script file"""
         try:
@@ -84,12 +79,7 @@ class SystemExecutor:
 
             # Determine interpreter based on file extension
             extension = os.path.splitext(script_path)[1].lower()
-            interpreter = {
-                '.py': 'python',
-                '.sh': 'bash',
-                '.js': 'node',
-                '.ps1': 'powershell'
-            }.get(extension)
+            interpreter = {".py": "python", ".sh": "bash", ".js": "node", ".ps1": "powershell"}.get(extension)
 
             if not interpreter:
                 raise ValueError(f"Unsupported script type: {extension}")
@@ -98,13 +88,7 @@ class SystemExecutor:
             if args:
                 command.extend(args)
 
-            return await self.execute_command(
-                command,
-                process_id,
-                shell=False,
-                env=env,
-                timeout=timeout
-            )
+            return await self.execute_command(command, process_id, shell=False, env=env, timeout=timeout)
 
         except Exception as e:
             self.logger.error(f"Script execution failed: {str(e)}")
@@ -119,7 +103,7 @@ class SystemExecutor:
 
             process.terminate()
             await process.wait()
-            
+
             del self.running_processes[process_id]
             return True
 
@@ -132,8 +116,8 @@ class SystemExecutor:
         try:
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
-            
+            disk = psutil.disk_usage("/")
+
             return {
                 "platform": platform.platform(),
                 "python_version": platform.python_version(),
@@ -145,7 +129,7 @@ class SystemExecutor:
                 "disk_total": disk.total,
                 "disk_free": disk.free,
                 "disk_percent": disk.percent,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -160,7 +144,7 @@ class SystemExecutor:
                 return None
 
             proc = psutil.Process(process.pid)
-            
+
             return {
                 "process_id": process_id,
                 "pid": proc.pid,
@@ -168,8 +152,8 @@ class SystemExecutor:
                 "cpu_percent": proc.cpu_percent(),
                 "memory_percent": proc.memory_percent(),
                 "create_time": datetime.fromtimestamp(proc.create_time()).isoformat(),
-                "command": ' '.join(proc.cmdline()),
-                "output": self.process_outputs.get(process_id, [])
+                "command": " ".join(proc.cmdline()),
+                "output": self.process_outputs.get(process_id, []),
             }
 
         except Exception as e:
@@ -177,46 +161,30 @@ class SystemExecutor:
             return None
 
     async def execute_parallel_commands(
-        self,
-        commands: List[Dict[str, Union[str, List[str]]]],
-        timeout: Optional[float] = None
+        self, commands: List[Dict[str, Union[str, List[str]]]], timeout: Optional[float] = None
     ) -> List[Dict[str, Union[int, str, List[str]]]]:
         """Execute multiple commands in parallel"""
         try:
             tasks = []
             for cmd in commands:
-                process_id = cmd.get('process_id', str(len(tasks)))
-                command = cmd.get('command')
-                shell = cmd.get('shell', False)
-                cwd = cmd.get('cwd')
-                env = cmd.get('env')
+                process_id = cmd.get("process_id", str(len(tasks)))
+                command = cmd.get("command")
+                shell = cmd.get("shell", False)
+                cwd = cmd.get("cwd")
+                env = cmd.get("env")
 
-                task = self.execute_command(
-                    command,
-                    process_id,
-                    shell,
-                    cwd,
-                    env,
-                    timeout
-                )
+                task = self.execute_command(command, process_id, shell, cwd, env, timeout)
                 tasks.append(task)
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            return [
-                result if not isinstance(result, Exception)
-                else {"error": str(result)}
-                for result in results
-            ]
+            return [result if not isinstance(result, Exception) else {"error": str(result)} for result in results]
 
         except Exception as e:
             self.logger.error(f"Parallel execution failed: {str(e)}")
             raise
 
     async def monitor_process_resources(
-        self,
-        process_id: str,
-        interval: float = 1.0,
-        duration: Optional[float] = None
+        self, process_id: str, interval: float = 1.0, duration: Optional[float] = None
     ) -> List[Dict[str, Union[float, str]]]:
         """Monitor process resource usage over time"""
         try:
@@ -232,12 +200,14 @@ class SystemExecutor:
                 if duration and (datetime.now() - start_time).total_seconds() > duration:
                     break
 
-                measurements.append({
-                    "timestamp": datetime.now().isoformat(),
-                    "cpu_percent": proc.cpu_percent(),
-                    "memory_percent": proc.memory_percent(),
-                    "status": proc.status()
-                })
+                measurements.append(
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "cpu_percent": proc.cpu_percent(),
+                        "memory_percent": proc.memory_percent(),
+                        "status": proc.status(),
+                    }
+                )
 
                 await asyncio.sleep(interval)
 
@@ -247,16 +217,14 @@ class SystemExecutor:
             self.logger.error(f"Process monitoring failed: {str(e)}")
             raise
 
+
 if __name__ == "__main__":
+
     async def main():
         executor = SystemExecutor()
 
         # Execute a simple command
-        result = await executor.execute_command(
-            "echo 'Hello, World!'",
-            "test1",
-            shell=True
-        )
+        result = await executor.execute_command("echo 'Hello, World!'", "test1", shell=True)
         print("Command result:", json.dumps(result, indent=2))
 
         # Get system information
@@ -264,10 +232,9 @@ if __name__ == "__main__":
         print("System info:", json.dumps(system_info, indent=2))
 
         # Execute parallel commands
-        parallel_results = await executor.execute_parallel_commands([
-            {"command": "echo 'Command 1'", "shell": True},
-            {"command": "echo 'Command 2'", "shell": True}
-        ])
+        parallel_results = await executor.execute_parallel_commands(
+            [{"command": "echo 'Command 1'", "shell": True}, {"command": "echo 'Command 2'", "shell": True}]
+        )
         print("Parallel results:", json.dumps(parallel_results, indent=2))
 
     asyncio.run(main())

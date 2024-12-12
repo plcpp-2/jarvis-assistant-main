@@ -3,6 +3,7 @@ import shutil
 from typing import List, Optional
 from pathlib import Path
 
+
 class FileOperations:
     def __init__(self, base_directory: Optional[str] = None):
         self.base_directory = Path(base_directory) if base_directory else Path.home()

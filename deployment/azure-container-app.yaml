@@ -1,35 +1,65 @@
-apiVersion: 2022-11-01-preview
-location: eastus
-name: jarvis-assistant
-resourceGroup: your-resource-group
-type: Microsoft.App/containerApps
-properties:
-  managedEnvironmentId: /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.App/managedEnvironments/{environment-name}
+apiVersion: containerapp.io/v1
+kind: ContainerApp
+metadata:
+  name: jarvis-assistant
+spec:
+  location: eastus
+  resourceGroup: jarvis-resource-group
+  environmentId: jarvis-container-env
+  
+  template:
+    containers:
+    - name: jarvis-assistant
+      image: jarviscontainerregistry.azurecr.io/jarvis-assistant:latest
+      resources:
+        cpu: 0.5
+        memory: 1Gi
+      
+      env:
+      - name: AZURE_ENV
+        value: production
+      
+      - name: OPENAI_API_KEY
+        secretRef: openai-api-key
+      
+      - name: DATABASE_URL
+        secretRef: database-connection-string
+      
+      - name: JWT_SECRET
+        secretRef: jwt-secret
+
   configuration:
+    activeRevisionsMode: single
+    
+    secrets:
+    - name: openai-api-key
+      value: ${OPENAI_API_KEY}
+    
+    - name: database-connection-string
+      value: ${DATABASE_CONNECTION_STRING}
+    
+    - name: jwt-secret
+      value: ${JWT_SECRET}
+    
     ingress:
       external: true
       targetPort: 8000
-    secrets:
-      - name: registry-password
-        value: {acr-password}
+      
     registries:
-      - server: {acr-name}.azurecr.io
-        username: {acr-name}
-        passwordSecretRef: registry-password
-  template:
-    containers:
-      - name: jarvis-assistant
-        image: {acr-name}.azurecr.io/jarvis-assistant:latest
-        env:
-          - name: DATABASE_URL
-            value: {your-database-connection-string}
-          - name: REDIS_URL
-            value: {your-redis-connection-string}
-          - name: KAFKA_BOOTSTRAP_SERVERS
-            value: {your-kafka-connection-string}
-        resources:
-          cpu: 1
-          memory: 2Gi
-    scale:
-      minReplicas: 1
-      maxReplicas: 3
+    - server: jarviscontainerregistry.azurecr.io
+      username: ${ACR_USERNAME}
+      passwordSecretRef: acr-password
+    
+    secrets:
+    - name: acr-password
+      value: ${ACR_PASSWORD}
+  
+  scaling:
+    minReplicas: 1
+    maxReplicas: 3
+    
+    rules:
+    - name: http-scaling
+      http:
+        metadata:
+          concurrentRequests: 10

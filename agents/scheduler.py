@@ -10,32 +10,26 @@ from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 
+
 class TaskScheduler:
     def __init__(self, redis_url: str):
         self.logger = logging.getLogger("TaskScheduler")
-        
+
         # Configure job stores
         jobstores = {
-            'default': RedisJobStore(jobs_key='jarvis_scheduler.jobs',
-                                   run_times_key='jarvis_scheduler.run_times',
-                                   host=redis_url)
+            "default": RedisJobStore(
+                jobs_key="jarvis_scheduler.jobs", run_times_key="jarvis_scheduler.run_times", host=redis_url
+            )
         }
-        
+
         # Configure executors
-        executors = {
-            'default': ThreadPoolExecutor(20),
-            'processpool': ProcessPoolExecutor(5)
-        }
-        
+        executors = {"default": ThreadPoolExecutor(20), "processpool": ProcessPoolExecutor(5)}
+
         # Create scheduler
         self.scheduler = AsyncIOScheduler(
             jobstores=jobstores,
             executors=executors,
-            job_defaults={
-                'coalesce': False,
-                'max_instances': 3,
-                'misfire_grace_time': 30
-            }
+            job_defaults={"coalesce": False, "max_instances": 3, "misfire_grace_time": 30},
         )
 
     async def start(self):
@@ -56,30 +50,24 @@ class TaskScheduler:
         trigger_args: Dict[str, Any],
         args: Optional[List] = None,
         kwargs: Optional[Dict] = None,
-        executor: str = 'default',
-        **job_kwargs
+        executor: str = "default",
+        **job_kwargs,
     ) -> str:
         """Schedule a new task"""
         try:
             # Create trigger based on type
-            if trigger_type == 'date':
+            if trigger_type == "date":
                 trigger = DateTrigger(**trigger_args)
-            elif trigger_type == 'interval':
+            elif trigger_type == "interval":
                 trigger = IntervalTrigger(**trigger_args)
-            elif trigger_type == 'cron':
+            elif trigger_type == "cron":
                 trigger = CronTrigger(**trigger_args)
             else:
                 raise ValueError(f"Invalid trigger type: {trigger_type}")
 
             # Add job to scheduler
             job = self.scheduler.add_job(
-                func,
-                trigger=trigger,
-                args=args or [],
-                kwargs=kwargs or {},
-                id=task_id,
-                executor=executor,
-                **job_kwargs
+                func, trigger=trigger, args=args or [], kwargs=kwargs or {}, id=task_id, executor=executor, **job_kwargs
             )
 
             self.logger.info(f"Scheduled task {task_id} with trigger {trigger_type}")
@@ -98,29 +86,18 @@ class TaskScheduler:
         end_date: Optional[datetime] = None,
         args: Optional[List] = None,
         kwargs: Optional[Dict] = None,
-        executor: str = 'default',
-        **job_kwargs
+        executor: str = "default",
+        **job_kwargs,
     ) -> str:
         """Schedule a recurring task with interval trigger"""
         try:
             if isinstance(interval, int):
                 interval = timedelta(seconds=interval)
 
-            trigger_args = {
-                'interval': interval,
-                'start_date': start_date,
-                'end_date': end_date
-            }
+            trigger_args = {"interval": interval, "start_date": start_date, "end_date": end_date}
 
             return await self.schedule_task(
-                task_id,
-                func,
-                'interval',
-                trigger_args,
-                args,
-                kwargs,
-                executor,
-                **job_kwargs
+                task_id, func, "interval", trigger_args, args, kwargs, executor, **job_kwargs
             )
 
         except Exception as e:
@@ -134,36 +111,29 @@ class TaskScheduler:
         cron_expression: str,
         args: Optional[List] = None,
         kwargs: Optional[Dict] = None,
-        executor: str = 'default',
-        **job_kwargs
+        executor: str = "default",
+        **job_kwargs,
     ) -> str:
         """Schedule a task with cron trigger"""
         try:
             # Parse cron expression
             cron_fields = cron_expression.split()
             trigger_args = {}
-            
+
             if len(cron_fields) == 5:
-                trigger_args.update({
-                    'minute': cron_fields[0],
-                    'hour': cron_fields[1],
-                    'day': cron_fields[2],
-                    'month': cron_fields[3],
-                    'day_of_week': cron_fields[4]
-                })
+                trigger_args.update(
+                    {
+                        "minute": cron_fields[0],
+                        "hour": cron_fields[1],
+                        "day": cron_fields[2],
+                        "month": cron_fields[3],
+                        "day_of_week": cron_fields[4],
+                    }
+                )
             else:
                 raise ValueError("Invalid cron expression")
 
-            return await self.schedule_task(
-                task_id,
-                func,
-                'cron',
-                trigger_args,
-                args,
-                kwargs,
-                executor,
-                **job_kwargs
-            )
+            return await self.schedule_task(task_id, func, "cron", trigger_args, args, kwargs, executor, **job_kwargs)
 
         except Exception as e:
             self.logger.error(f"Failed to schedule cron task {task_id}: {str(e)}")
@@ -204,12 +174,12 @@ class TaskScheduler:
                 raise ValueError(f"Task {task_id} not found")
 
             return {
-                'id': job.id,
-                'name': job.name,
-                'trigger': str(job.trigger),
-                'next_run_time': job.next_run_time.isoformat() if job.next_run_time else None,
-                'executor': job.executor,
-                'status': 'paused' if job.next_run_time is None else 'active'
+                "id": job.id,
+                "name": job.name,
+                "trigger": str(job.trigger),
+                "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+                "executor": job.executor,
+                "status": "paused" if job.next_run_time is None else "active",
             }
 
         except Exception as e:
@@ -222,12 +192,12 @@ class TaskScheduler:
             jobs = self.scheduler.get_jobs()
             return [
                 {
-                    'id': job.id,
-                    'name': job.name,
-                    'trigger': str(job.trigger),
-                    'next_run_time': job.next_run_time.isoformat() if job.next_run_time else None,
-                    'executor': job.executor,
-                    'status': 'paused' if job.next_run_time is None else 'active'
+                    "id": job.id,
+                    "name": job.name,
+                    "trigger": str(job.trigger),
+                    "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+                    "executor": job.executor,
+                    "status": "paused" if job.next_run_time is None else "active",
                 }
                 for job in jobs
             ]
@@ -241,7 +211,7 @@ class TaskScheduler:
         task_id: str,
         trigger_type: Optional[str] = None,
         trigger_args: Optional[Dict[str, Any]] = None,
-        **job_kwargs
+        **job_kwargs,
     ):
         """Modify an existing task's schedule"""
         try:
@@ -250,16 +220,16 @@ class TaskScheduler:
                 raise ValueError(f"Task {task_id} not found")
 
             if trigger_type and trigger_args:
-                if trigger_type == 'date':
+                if trigger_type == "date":
                     trigger = DateTrigger(**trigger_args)
-                elif trigger_type == 'interval':
+                elif trigger_type == "interval":
                     trigger = IntervalTrigger(**trigger_args)
-                elif trigger_type == 'cron':
+                elif trigger_type == "cron":
                     trigger = CronTrigger(**trigger_args)
                 else:
                     raise ValueError(f"Invalid trigger type: {trigger_type}")
 
-                job_kwargs['trigger'] = trigger
+                job_kwargs["trigger"] = trigger
 
             self.scheduler.modify_job(task_id, **job_kwargs)
             self.logger.info(f"Modified task {task_id}")
@@ -268,7 +238,9 @@ class TaskScheduler:
             self.logger.error(f"Failed to modify task {task_id}: {str(e)}")
             raise
 
+
 if __name__ == "__main__":
+
     async def example_task(name: str):
         print(f"Running task: {name} at {datetime.now()}")
 
@@ -277,18 +249,10 @@ if __name__ == "__main__":
         await scheduler.start()
 
         # Schedule different types of tasks
-        await scheduler.schedule_recurring_task(
-            "recurring_task",
-            example_task,
-            interval=30,
-            args=["Recurring Task"]
-        )
+        await scheduler.schedule_recurring_task("recurring_task", example_task, interval=30, args=["Recurring Task"])
 
         await scheduler.schedule_cron_task(
-            "cron_task",
-            example_task,
-            "*/5 * * * *",  # Every 5 minutes
-            args=["Cron Task"]
+            "cron_task", example_task, "*/5 * * * *", args=["Cron Task"]  # Every 5 minutes
         )
 
         # List all tasks

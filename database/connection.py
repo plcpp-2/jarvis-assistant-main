@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
+
 class DatabasePool:
     def __init__(self, dsn: str, min_size: int = 5, max_size: int = 20):
         self.dsn = dsn
@@ -16,10 +17,7 @@ class DatabasePool:
         """Initialize the connection pool"""
         try:
             self.pool = await asyncpg.create_pool(
-                self.dsn,
-                min_size=self.min_size,
-                max_size=self.max_size,
-                command_timeout=60
+                self.dsn, min_size=self.min_size, max_size=self.max_size, command_timeout=60
             )
             logger.info("Database pool initialized")
         except Exception as e:
@@ -37,7 +35,7 @@ class DatabasePool:
         """Acquire a connection from the pool"""
         if not self.pool:
             raise RuntimeError("Database pool not initialized")
-            
+
         async with self.pool.acquire() as connection:
             yield connection
 

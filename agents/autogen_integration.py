@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AutogenAgentManager:
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -14,19 +15,14 @@ class AutogenAgentManager:
     def initialize_agents(self):
         """Initialize Autogen agents"""
         # Assistant agent configuration
-        assistant_config = {
-            "seed": 42,
-            "temperature": 0.7,
-            "model": "gpt-4",
-            "config_list": self.config["config_list"]
-        }
+        assistant_config = {"seed": 42, "temperature": 0.7, "model": "gpt-4", "config_list": self.config["config_list"]}
 
         # User proxy configuration
         user_proxy_config = {
             "seed": 42,
             "temperature": 0.7,
             "model": "gpt-4",
-            "config_list": self.config["config_list"]
+            "config_list": self.config["config_list"],
         }
 
         # Create the assistant agent
@@ -62,7 +58,7 @@ class AutogenAgentManager:
             "assistant": self.assistant,
             "user_proxy": self.user_proxy,
             "coder": self.coder,
-            "researcher": self.researcher
+            "researcher": self.researcher,
         }
 
     async def process_task(self, task: Task) -> TaskResult:
@@ -70,47 +66,34 @@ class AutogenAgentManager:
         try:
             # Select agents based on task type
             agents = self.select_agents_for_task(task)
-            
+
             # Create group chat
-            groupchat = autogen.GroupChat(
-                agents=agents,
-                messages=[],
-                max_round=10
-            )
+            groupchat = autogen.GroupChat(agents=agents, messages=[], max_round=10)
             manager = autogen.GroupChatManager(groupchat=groupchat)
 
             # Initialize the chat with task details
             initial_message = self.format_task_message(task)
-            
+
             # Start the group chat
             result = await self.run_group_chat(manager, initial_message)
-            
-            return TaskResult(
-                success=True,
-                data=result,
-                metrics={"completion_time": 0.0}  # Add actual metrics
-            )
-            
+
+            return TaskResult(success=True, data=result, metrics={"completion_time": 0.0})  # Add actual metrics
+
         except Exception as e:
             logger.error(f"Error processing task with Autogen: {e}")
-            return TaskResult(
-                success=False,
-                data={},
-                metrics={},
-                error=str(e)
-            )
+            return TaskResult(success=False, data={}, metrics={}, error=str(e))
 
     def select_agents_for_task(self, task: Task) -> List[autogen.Agent]:
         """Select appropriate agents based on task type"""
         agents = [self.user_proxy]  # Always include user proxy
-        
+
         if task.type == "coding":
             agents.extend([self.assistant, self.coder])
         elif task.type == "research":
             agents.extend([self.assistant, self.researcher])
         else:
             agents.append(self.assistant)
-            
+
         return agents
 
     def format_task_message(self, task: Task) -> str:
@@ -123,11 +106,7 @@ class AutogenAgentManager:
         Parameters: {task.parameters}
         """
 
-    async def run_group_chat(
-        self,
-        manager: autogen.GroupChatManager,
-        message: str
-    ) -> Dict[str, Any]:
+    async def run_group_chat(self, manager: autogen.GroupChatManager, message: str) -> Dict[str, Any]:
         """Run the group chat asynchronously"""
         # Note: Autogen's chat functionality might need to be wrapped
         # in asyncio.to_thread if it's blocking
@@ -139,7 +118,7 @@ class AutogenAgentManager:
         return {
             "summary": str(chat_result),
             "messages": self.extract_messages(chat_result),
-            "decisions": self.extract_decisions(chat_result)
+            "decisions": self.extract_decisions(chat_result),
         }
 
     def extract_messages(self, chat_result: Any) -> List[Dict[str, str]]:

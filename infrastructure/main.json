@@ -1,0 +1,303 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.31.92.45157",
+      "templateHash": "14465831985920046848"
+    }
+  },
+  "parameters": {
+    "baseName": {
+      "type": "string",
+      "defaultValue": "jarvis-assistant",
+      "metadata": {
+        "description": "Base name for all resources"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "staging",
+        "prod"
+      ],
+      "metadata": {
+        "description": "Environment (dev, staging, prod)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources"
+      }
+    },
+    "postgresAdminUsername": {
+      "type": "string",
+      "defaultValue": "jarvisadmin",
+      "metadata": {
+        "description": "PostgreSQL admin username"
+      }
+    },
+    "postgresAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "PostgreSQL admin password"
+      }
+    },
+    "enableConfidentialComputing": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Confidential Computing"
+      }
+    },
+    "confidentialComputingSku": {
+      "type": "string",
+      "defaultValue": "DCsv3",
+      "allowedValues": [
+        "DCsv2",
+        "DCsv3"
+      ],
+      "metadata": {
+        "description": "Confidential Computing SKU"
+      }
+    },
+    "tenantManagementMode": {
+      "type": "string",
+      "defaultValue": "Shared",
+      "allowedValues": [
+        "Shared",
+        "Isolated"
+      ],
+      "metadata": {
+        "description": "Tenant Management Mode"
+      }
+    }
+  },
+  "variables": {
+    "resourceTags": {
+      "Environment": "[parameters('environment')]",
+      "Application": "Jarvis Assistant",
+      "ManagedBy": "Bicep",
+      "ArchitecturePattern": "SaaS"
+    },
+    "nameSuffix": "[format('{0}-{1}', parameters('baseName'), parameters('environment'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-05-01",
+      "name": "[format('vnet-{0}', variables('nameSuffix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "subnet-containers",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "privateEndpointNetworkPolicies": "Disabled"
+            }
+          },
+          {
+            "name": "subnet-database",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24",
+              "privateEndpointNetworkPolicies": "Disabled"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2021-12-01",
+      "name": "[format('acr{0}', replace(variables('nameSuffix'), '-', ''))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "adminUserEnabled": false
+      }
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2022-03-01",
+      "name": "[format('env-{0}', variables('nameSuffix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "daprAIInstrumentationKey": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', variables('nameSuffix'))), '2020-02-02').InstrumentationKey]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', format('appi-{0}', variables('nameSuffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[format('appi-{0}', variables('nameSuffix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "Flow_Type": "Redfield",
+        "Request_Source": "IbizaAIExtension"
+      }
+    },
+    {
+      "condition": "[parameters('enableConfidentialComputing')]",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2023-03-01",
+      "name": "[format('ccf-cluster-{0}', variables('nameSuffix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "sku": {
+        "name": "[parameters('confidentialComputingSku')]",
+        "tier": "Standard",
+        "capacity": 2
+      },
+      "properties": {
+        "orchestrationMode": "Uniform",
+        "singlePlacementGroup": false,
+        "platformFaultDomainCount": 1,
+        "virtualMachineProfile": {
+          "osProfile": {
+            "computerNamePrefix": "ccf",
+            "adminUsername": "azureuser",
+            "linuxConfiguration": {
+              "disablePasswordAuthentication": true
+            }
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "Canonical",
+              "offer": "0001-com-ubuntu-confidential-vm-focal",
+              "sku": "20_04-lts-cvm",
+              "version": "latest"
+            },
+            "osDisk": {
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS",
+                "securityProfile": {
+                  "securityEncryptionType": "DiskWithVMGuestState"
+                }
+              }
+            }
+          },
+          "securityProfile": {
+            "uefiSettings": {
+              "secureBootEnabled": true,
+              "vTpmEnabled": true
+            },
+            "confidentialVmEncryptionType": "DiskWithVMGuestState"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.SaaS/tenants",
+      "apiVersion": "2022-01-01",
+      "name": "[format('tenant-mgmt-{0}', variables('nameSuffix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "tenantMode": "[parameters('tenantManagementMode')]",
+        "multiTenantEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('kv-{0}', variables('nameSuffix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "enabledForDeployment": true,
+        "enabledForDiskEncryption": true,
+        "enabledForTemplateDeployment": true,
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 90,
+        "accessPolicies": [],
+        "networkAcls": {
+          "defaultAction": "Deny",
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": []
+        }
+      }
+    },
+    {
+      "type": "Microsoft.ConfidentialLedger/ledgers",
+      "apiVersion": "2022-05-13",
+      "name": "[format('ledger-{0}', variables('nameSuffix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('resourceTags')]",
+      "properties": {
+        "ledgerType": "Private",
+        "aadBasedSecurityPrincipals": []
+      }
+    },
+    {
+      "type": "Microsoft.AAD/registeredApps",
+      "apiVersion": "2021-04-01",
+      "name": "[format('app-{0}', variables('nameSuffix'))]",
+      "properties": {
+        "displayName": "Jarvis Assistant SaaS App",
+        "signInAudience": "AzureADMultipleOrgs"
+      }
+    }
+  ],
+  "outputs": {
+    "containerRegistryLoginServer": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', format('acr{0}', replace(variables('nameSuffix'), '-', ''))), '2021-12-01').loginServer]"
+    },
+    "containerAppEnvironmentName": {
+      "type": "string",
+      "value": "[format('env-{0}', variables('nameSuffix'))]"
+    },
+    "applicationInsightsInstrumentationKey": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Insights/components', format('appi-{0}', variables('nameSuffix'))), '2020-02-02').InstrumentationKey]"
+    },
+    "keyVaultUri": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.KeyVault/vaults', format('kv-{0}', variables('nameSuffix'))), '2021-11-01-preview').vaultUri]"
+    },
+    "adAppRegistrationId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.AAD/registeredApps', format('app-{0}', variables('nameSuffix')))]"
+    },
+    "confidentialComputingClusterId": {
+      "type": "string",
+      "value": "[if(parameters('enableConfidentialComputing'), resourceId('Microsoft.Compute/virtualMachineScaleSets', format('ccf-cluster-{0}', variables('nameSuffix'))), '')]"
+    },
+    "tenantManagementServiceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.SaaS/tenants', format('tenant-mgmt-{0}', variables('nameSuffix')))]"
+    },
+    "confidentialLedgerId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ConfidentialLedger/ledgers', format('ledger-{0}', variables('nameSuffix')))]"
+    }
+  }
+}
